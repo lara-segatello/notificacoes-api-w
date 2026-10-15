@@ -1,5 +1,5 @@
 // tests/integration/participante.integration.test.js
-// Teste de INTEGRAÇÃO: o service conversa com o banco de TESTE de verdade.
+
 const { sequelize, Participante } = require("../../src/models");
 const ParticipanteService = require("../../src/services/ParticipanteService");
 const limparBanco = require("../helpers/limparBanco");
@@ -42,4 +42,47 @@ describe("ParticipanteService.criar (integração)", () => {
     const total = await Participante.count();
     expect(total).toBe(1);
   });
+
+  it("não grava participante com e-mail inválido", async () => {
+
+    // Arrange: um participante com e-mail SEM @
+
+    const dados = { nome: "Bruno", email: "brunosenai.br" };
+
+    // Act + Assert: a gravação precisa ser recusada
+
+    await expect(ParticipanteService.criar(dados)).rejects.toThrow();
+
+    // Assert no banco: quantos participantes devem existir agora?
+
+    const total = await Participante.count();
+
+    expect(total).toBe(0);
+
+  });
+
 });
+
+
+describe("ParticipanteService.atualizar (integração)", () => {
+  it("grava o nome novo no banco", async () => {
+    // Arrange: criar o participante
+    const participante = await ParticipanteService.criar({
+      nome: "Ana",
+      email: "ana@senai.br",
+    });
+
+    // Act: atualizar o nome
+    await ParticipanteService.atualizar(participante.id, {
+      nome: "Ana Maria",
+    });
+
+    // Assert: buscar novamente no banco
+    const participanteAtualizado = await ParticipanteService.buscarPorId(
+      participante.id
+    );
+
+    expect(participanteAtualizado.nome).toBe("Ana Maria");
+  });
+});
+
